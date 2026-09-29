@@ -37,7 +37,7 @@ export default function ProfilePage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-slate-500">Hostel Name</label>
-                  <p className="font-medium">Nilgiri Hostel</p>
+                  <p className="font-medium">Ramanujan</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-slate-500">Room Number</label>

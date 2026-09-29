@@ -1,13 +1,36 @@
 import { PageHeader } from "@/components/ui-custom/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui-custom/status-badge";
+import { EmptyState } from "@/components/ui-custom/empty-state";
+import { Bell } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
-export default function AnnouncementsPage() {
-  const announcements = [
-    { id: 1, title: "Pest control scheduled for tomorrow", date: "Oct 25, 2023", type: "Important", content: "Please ensure all your food items are kept inside cupboards. Pest control will happen between 10 AM and 2 PM." },
-    { id: 2, title: "Mess menu updated for next week", date: "Oct 24, 2023", type: "Info", content: "The mess menu has been updated. Please check the notice board or the mess section for details." },
-    { id: 3, title: "Night canteen timing extended", date: "Oct 23, 2023", type: "Good News", content: "During the mid-sem week, the night canteen will remain open until 4 AM." },
-  ];
+export const dynamic = 'force-dynamic';
+
+export default async function AnnouncementsPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('hostel_id')
+    .eq('id', user.id)
+    .single();
+
+  if (!profile?.hostel_id) {
+    redirect('/onboarding');
+  }
+
+  const { data: announcements } = await supabase
+    .from('announcements')
+    .select('*')
+    .eq('hostel_id', profile.hostel_id)
+    .order('created_at', { ascending: false });
 
   return (
     <div className="space-y-6">
@@ -17,32 +40,37 @@ export default function AnnouncementsPage() {
       />
 
       <div className="space-y-4">
-        {announcements.map((announcement) => (
-          <Card key={announcement.id}>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-lg">{announcement.title}</CardTitle>
-                  <p className="text-sm text-slate-500">{announcement.date}</p>
+        {announcements && announcements.length > 0 ? (
+          announcements.map((announcement) => (
+            <Card key={announcement.id}>
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-lg">{announcement.title}</CardTitle>
+                    <p className="text-sm text-slate-500">{new Date(announcement.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <StatusBadge
+                    status={
+                      announcement.priority === "urgent"
+                        ? "error"
+                        : announcement.priority === "important"
+                        ? "warning"
+                        : "info"
+                    }
+                    className="capitalize"
+                  >
+                    {announcement.priority}
+                  </StatusBadge>
                 </div>
-                <StatusBadge
-                  status={
-                    announcement.type === "Important"
-                      ? "error"
-                      : announcement.type === "Good News"
-                      ? "success"
-                      : "info"
-                  }
-                >
-                  {announcement.type}
-                </StatusBadge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-700">{announcement.content}</p>
-            </CardContent>
-          </Card>
-        ))}
+              </CardHeader>
+              <CardContent>
+                <p className="text-slate-700 whitespace-pre-wrap">{announcement.content}</p>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <EmptyState icon={Bell} title="No announcements" description="There are no recent announcements." />
+        )}
       </div>
     </div>
   );

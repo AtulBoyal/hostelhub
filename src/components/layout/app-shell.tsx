@@ -1,10 +1,18 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
 import { BottomNav } from "./bottom-nav";
 import { Header } from "./header";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isAuthPage = pathname === "/login" || pathname === "/signup";
+
+  if (isAuthPage) {
+    return <div className="min-h-screen bg-slate-50 flex flex-col">{children}</div>;
+  }
+
   return (
     <div className="h-full min-h-screen bg-slate-50">
       <Sidebar />

@@ -31,7 +31,9 @@ export default function EmergencyPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <Button className="w-full mt-2" variant="outline">Call Now</Button>
+              <a href={`tel:${contact.number.replace(/[^0-9+]/g, '')}`} className="block w-full">
+                <Button className="w-full mt-2" variant="outline">Call Now</Button>
+              </a>
             </CardContent>
           </Card>
         ))}
