@@ -1,16 +1,12 @@
-import { PageHeader } from "@/components/ui-custom/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatusBadge } from "@/components/ui-custom/status-badge";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ensureWashingMachines } from "../actions/laundry";
-import { EmptyState } from "@/components/ui-custom/empty-state";
-import { WashingMachine } from "lucide-react";
+import { WashingMachine, Clock, Wrench, AlertTriangle, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { BookMachineDialog } from "./book-machine-dialog";
 import { CancelBookingDialog } from "./cancel-booking-dialog";
 import { ReportProblemDialog } from "./report-problem-dialog";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +21,7 @@ export default async function LaundryPage() {
   // Get user profile for hostel_id
   const { data: profile } = await supabase
     .from('profiles')
-    .select('hostel_id, hostels(name)')
+    .select('hostel_id, hostels(name), floors(floor_number)')
     .eq('id', user.id)
     .single();
 
@@ -37,6 +33,7 @@ export default async function LaundryPage() {
   await ensureWashingMachines(profile.hostel_id);
 
   const hostelName = (profile.hostels as any)?.name || 'Hostel';
+  const myFloor = (profile.floors as any)?.floor_number || '?';
 
   // Fetch all floors and active maintenance issues in parallel
   const [
@@ -60,9 +57,18 @@ export default async function LaundryPage() {
 
   if (!floors) {
     return (
-      <div className="space-y-6">
-        <PageHeader title="Laundry Machines" description={`${hostelName} · 1 machine per floor`} />
-        <EmptyState icon={WashingMachine} title="Unable to load laundry machines" description="Please try again later." />
+      <div className="max-w-6xl mx-auto space-y-8 pb-10">
+        <section className="mt-4">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Laundry</h1>
+          <p className="text-slate-500 mt-2 text-base max-w-2xl">
+            {hostelName} · Floor {myFloor}
+          </p>
+        </section>
+        <div className="flex flex-col items-center justify-center p-12 text-center bg-white border border-slate-200 rounded-3xl">
+          <WashingMachine className="h-10 w-10 text-slate-300 mb-4" />
+          <p className="text-sm font-medium text-slate-900">No washing machines found</p>
+          <p className="text-xs text-slate-500 mt-1">Machine information hasn't been configured for this hostel yet.</p>
+        </div>
       </div>
     )
   }
@@ -119,150 +125,203 @@ export default async function LaundryPage() {
     }
   });
 
+  const availableCount = floorsData.filter(f => f.computedStatus === 'available').length;
+  const inUseCount = floorsData.filter(f => f.computedStatus === 'in_use').length;
+  const brokenCount = floorsData.filter(f => f.computedStatus === 'not_working').length;
+
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Laundry Machines"
-        description={`${hostelName} · 1 machine per floor`}
-      />
+    <div className="max-w-6xl mx-auto space-y-10 pb-10">
+      
+      {/* 1. HEADER & 3. SUMMARY */}
+      <section className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Laundry</h1>
+        <p className="text-slate-500 mt-2 text-base md:text-lg max-w-2xl font-medium">
+          {hostelName} · Floor {myFloor}
+        </p>
+        <p className="text-slate-400 text-sm mt-1">
+          Check machine availability and reserve a washing machine on your floor.
+        </p>
+        
+        {/* Availability Summary */}
+        <div className="flex flex-wrap items-center gap-3 mt-6">
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
+            <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
+            <span className="text-xs font-semibold text-slate-700">{availableCount} Available</span>
+          </div>
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+            <span className="text-xs font-semibold text-slate-700">{inUseCount} In Use</span>
+          </div>
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
+            <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
+            <span className="text-xs font-semibold text-slate-700">{brokenCount} Not Working</span>
+          </div>
+        </div>
+      </section>
 
-      {/* ACTIVE BOOKING SECTION */}
-      {activeBooking && (
-        <Card className="border-blue-200 shadow-sm bg-blue-50/30">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-lg text-blue-900">Your Laundry Booking</CardTitle>
-              <CancelBookingDialog machineId={activeBooking.machineId} />
+      {/* 2. YOUR LAUNDRY (ACTIVE BOOKING) */}
+      <section className="animate-in fade-in slide-in-from-bottom-3 duration-500 delay-75 fill-mode-both">
+        <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest pl-1 mb-4">Your Laundry</h2>
+        {activeBooking ? (
+          <div className="bg-amber-50/50 border border-amber-200/60 rounded-3xl p-6 shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-6 flex items-center justify-center opacity-10 md:opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+              <WashingMachine className="h-32 w-32 text-amber-600" />
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-blue-800">
-              <p className="font-medium">Floor {activeBooking.floorNumber} · Washing Machine 1</p>
-              <p className="text-sm mt-1">
-                Today · {new Date(activeBooking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – {new Date(activeBooking.expectedFinishTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </p>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse" />
+                <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">In Use</span>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Floor {activeBooking.floorNumber} · Washing Machine 1</h3>
+              <div className="flex items-center gap-2 mt-2 text-sm text-slate-600 font-medium">
+                <PlayCircle className="h-4 w-4 text-slate-400" />
+                <span>Started {new Date(activeBooking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span className="text-slate-300">•</span>
+                <Clock className="h-4 w-4 text-slate-400" />
+                <span>Available at {new Date(activeBooking.expectedFinishTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
               {activeBooking.instruction && (
-                <p className="text-sm mt-2 text-blue-700 italic">{activeBooking.instruction}</p>
+                <p className="mt-3 text-sm text-amber-800 italic bg-amber-100/50 inline-block px-3 py-1.5 rounded-md">"{activeBooking.instruction}"</p>
               )}
+              <div className="mt-6">
+                <CancelBookingDialog machineId={activeBooking.machineId} />
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center p-8 bg-white/50 border border-slate-200 border-dashed rounded-3xl">
+            <p className="text-sm font-medium text-slate-400">No active laundry booking</p>
+          </div>
+        )}
+      </section>
 
-      {/* ALL MACHINES GRID */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {floorsData.map((floor) => {
-          const m = floor.machine;
-          
-          if (!m) {
-            return (
-              <Card key={floor.id} className="border-slate-200">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Floor {floor.floor_number}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-slate-500 font-medium">Machine unavailable</p>
-                </CardContent>
-              </Card>
-            )
-          }
+      {/* 4. FLOOR GRID */}
+      <section className="animate-in fade-in slide-in-from-bottom-3 duration-500 delay-150 fill-mode-both">
+        <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest pl-1 mb-4">All Machines (10 Floors)</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {floorsData.map((floor) => {
+            const m = floor.machine;
+            
+            if (!m) {
+              return (
+                <div key={floor.id} className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm opacity-50">
+                  <h3 className="text-lg font-bold text-slate-900">Floor {floor.floor_number}</h3>
+                  <p className="text-sm text-slate-500 mt-1">Machine unavailable</p>
+                </div>
+              )
+            }
 
-          return (
-            <Card key={floor.id} className="border-slate-200 shadow-sm">
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
+            // 5. AVAILABLE CARD
+            if (floor.computedStatus === 'available') {
+              return (
+                <div key={floor.id} className="group flex flex-col justify-between bg-white border border-slate-200 hover:border-green-300 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
                   <div>
-                    <CardTitle className="text-lg font-semibold">Floor {floor.floor_number}</CardTitle>
-                    <p className="text-slate-500 text-sm mt-0.5">Washing Machine 1</p>
+                    <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wide">Floor {floor.floor_number}</h3>
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mt-1">Washing Machine 1</p>
+                    
+                    <div className="mt-6 flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="h-3 w-3 rounded-full bg-green-500" />
+                        <span className="text-sm font-bold text-green-700 tracking-wide">AVAILABLE</span>
+                      </div>
+                      <span className="text-xs font-medium text-slate-500 pl-5">Ready to use</span>
+                    </div>
                   </div>
-                  <StatusBadge
-                    status={
-                      floor.computedStatus === 'available' ? 'success'
-                        : floor.computedStatus === 'in_use' ? 'warning'
-                        : 'error'
-                    }
-                  >
-                    {floor.computedStatus === 'available' ? 'Available'
-                      : floor.computedStatus === 'in_use' ? 'In Use'
-                      : 'Not Working'}
-                  </StatusBadge>
+                  <div className="mt-8">
+                    <BookMachineDialog machineId={m.id} floorNumber={floor.floor_number} />
+                  </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col min-h-[5rem] justify-center space-y-2">
+              )
+            }
+
+            // 6. OCCUPIED CARD
+            if (floor.computedStatus === 'in_use') {
+              return (
+                <div key={floor.id} className="group flex flex-col justify-between bg-white border border-slate-200 hover:border-amber-300 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wide">Floor {floor.floor_number}</h3>
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mt-1">Washing Machine 1</p>
+                    
+                    <div className="mt-6 flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="h-3 w-3 rounded-full bg-amber-500 animate-pulse" />
+                        <span className="text-sm font-bold text-amber-700 tracking-wide">IN USE</span>
+                      </div>
+                      <div className="pl-5 mt-2 space-y-1.5 text-xs text-slate-600 font-medium">
+                        <p><span className="text-slate-400">Used by</span> {m.profiles?.name?.split(' ')[0] || 'Someone'}</p>
+                        <p><span className="text-slate-400">Started</span> {m.start_time ? new Date(m.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</p>
+                        <p><span className="text-slate-400">Available at</span> {floor.expectedFinish ? floor.expectedFinish.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</p>
+                        {m.instruction && (
+                          <p className="italic text-slate-500 mt-2">"{m.instruction}"</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                   
-                  {/* AVAILABLE */}
-                  {floor.computedStatus === 'available' && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-600 font-medium">Ready to use</span>
-                      <BookMachineDialog machineId={m.id} floorNumber={floor.floor_number} />
-                    </div>
-                  )}
-
-                  {/* IN USE */}
-                  {floor.computedStatus === 'in_use' && floor.expectedFinish && m.start_time && (
-                    <div className="text-sm text-slate-600 space-y-1 py-1">
-                      <p>
-                        <span className="font-semibold">Used by:</span> {m.profiles?.name || 'Someone'}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Started:</span> {new Date(m.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                      <p>
-                        <span className="font-semibold">Available until:</span> {floor.expectedFinish.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                      {m.instruction && (
-                        <p className="italic text-slate-500 pt-1">{m.instruction}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* NOT WORKING */}
-                  {floor.computedStatus === 'not_working' && (
-                    <div className="pt-1">
-                      {floor.activeIssue ? (
-                        <div className="text-sm space-y-2">
-                          <p className="font-medium text-slate-700">{floor.activeIssue.title}</p>
-                          <p className="text-slate-500">Reported: {new Date(floor.activeIssue.created_at).toLocaleDateString()} {new Date(floor.activeIssue.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                          <div className="flex justify-end pt-1">
-                            <Link href="/maintenance" className={buttonVariants({ variant: "outline", size: "sm" })}>
-                              View Issue
-                            </Link>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-500">Machine out of order</span>
-                          <ReportProblemDialog 
-                            machineId={m.id} 
-                            floorId={floor.id} 
-                            hostelId={profile.hostel_id} 
-                            floorNumber={floor.floor_number} 
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <div className="mt-8">
+                    {floor.isMyBooking ? (
+                      <div className="flex flex-col gap-2">
+                         <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Your Booking</span>
+                         <CancelBookingDialog machineId={m.id} />
+                      </div>
+                    ) : (
+                      // Display only
+                      <div className="h-10 w-full bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center text-xs font-medium text-slate-400 cursor-not-allowed">
+                        Occupied
+                      </div>
+                    )}
+                  </div>
                 </div>
-                
-                {/* Problem reporting link (only show if not already marked not working) */}
-                {floor.computedStatus !== 'not_working' && (
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end">
-                    <div className="w-full sm:w-auto">
-                      <ReportProblemDialog 
-                        machineId={m.id} 
-                        floorId={floor.id} 
-                        hostelId={profile.hostel_id} 
-                        floorNumber={floor.floor_number} 
-                      />
+              )
+            }
+
+            // 7. BROKEN CARD
+            if (floor.computedStatus === 'not_working') {
+              return (
+                <div key={floor.id} className="group flex flex-col justify-between bg-red-50/30 border border-red-100 hover:border-red-300 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wide">Floor {floor.floor_number}</h3>
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mt-1">Washing Machine 1</p>
+                    
+                    <div className="mt-6 flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="h-3 w-3 rounded-full bg-red-500" />
+                        <span className="text-sm font-bold text-red-700 tracking-wide">NOT WORKING</span>
+                      </div>
+                      
+                      <div className="pl-5 mt-2 space-y-1.5 text-xs text-slate-600 font-medium">
+                        {floor.activeIssue ? (
+                          <>
+                            <p className="font-semibold text-slate-800 line-clamp-1">{floor.activeIssue.title}</p>
+                            <p className="text-slate-500">Reported {new Date(floor.activeIssue.created_at).toLocaleDateString()} at {new Date(floor.activeIssue.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                          </>
+                        ) : (
+                          <p className="text-slate-500">Currently unavailable</p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+                  
+                  <div className="mt-8">
+                    {floor.activeIssue ? (
+                       <Link href="/maintenance" className={buttonVariants({ variant: "outline", className: "w-full bg-white hover:bg-slate-50 text-slate-700 border-slate-300 rounded-lg" })}>
+                         View Issue
+                       </Link>
+                    ) : (
+                       <ReportProblemDialog 
+                         machineId={m.id} 
+                         floorId={floor.id} 
+                         hostelId={profile.hostel_id} 
+                         floorNumber={floor.floor_number} 
+                       />
+                    )}
+                  </div>
+                </div>
+              )
+            }
+          })}
+        </div>
+      </section>
     </div>
   );
 }

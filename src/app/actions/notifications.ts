@@ -26,3 +26,27 @@ export async function markAllNotificationsAsRead() {
   
   return { success: 'All marked as read.' }
 }
+
+export async function markNotificationAsRead(notificationId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'You must be logged in.' }
+  }
+
+  const { error } = await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('id', notificationId)
+    .eq('user_id', user.id)
+
+  if (error) {
+    return { error: 'Failed to mark notification as read.' }
+  }
+
+  revalidatePath('/notifications')
+  revalidatePath('/dashboard')
+  
+  return { success: 'Marked as read.' }
+}

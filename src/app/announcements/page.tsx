@@ -1,10 +1,6 @@
-import { PageHeader } from "@/components/ui-custom/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatusBadge } from "@/components/ui-custom/status-badge";
-import { EmptyState } from "@/components/ui-custom/empty-state";
-import { Bell } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { AnnouncementsClient } from "./announcements-client";
 
 export const dynamic = 'force-dynamic';
 
@@ -18,13 +14,15 @@ export default async function AnnouncementsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('hostel_id')
+    .select('hostel_id, hostels(name)')
     .eq('id', user.id)
     .single();
 
   if (!profile?.hostel_id) {
     redirect('/onboarding');
   }
+
+  const hostelName = (profile.hostels as any)?.name || 'Hostel';
 
   const { data: announcements } = await supabase
     .from('announcements')
@@ -33,45 +31,21 @@ export default async function AnnouncementsPage() {
     .order('created_at', { ascending: false });
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Hostel Announcements"
-        description="Official updates and notices from the hostel administration."
-      />
+    <div className="max-w-4xl mx-auto space-y-8 pb-10">
+      
+      {/* 1. HEADER */}
+      <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Announcements</h1>
+          <p className="text-slate-500 mt-2 text-base md:text-lg max-w-2xl font-medium">
+            Stay updated with important news and notices from {hostelName}.
+          </p>
+        </div>
+      </section>
 
-      <div className="space-y-4">
-        {announcements && announcements.length > 0 ? (
-          announcements.map((announcement) => (
-            <Card key={announcement.id}>
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">{announcement.title}</CardTitle>
-                    <p className="text-sm text-slate-500">{new Date(announcement.created_at).toLocaleDateString()}</p>
-                  </div>
-                  <StatusBadge
-                    status={
-                      announcement.priority === "urgent"
-                        ? "error"
-                        : announcement.priority === "important"
-                        ? "warning"
-                        : "info"
-                    }
-                    className="capitalize"
-                  >
-                    {announcement.priority}
-                  </StatusBadge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-slate-700 whitespace-pre-wrap">{announcement.content}</p>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <EmptyState icon={Bell} title="No announcements" description="There are no recent announcements." />
-        )}
-      </div>
+      {/* 2. CLIENT-SIDE FEED (Search, Filters, Pinned, List) */}
+      <AnnouncementsClient initialAnnouncements={announcements || []} />
+      
     </div>
   );
 }

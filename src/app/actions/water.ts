@@ -56,7 +56,7 @@ export async function ensurePurifiers(hostelId: string) {
   }
 }
 
-export async function reportPurifierProblem(formData: FormData) {
+export async function reportPurifierProblem(prevState: any, formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 

@@ -1,10 +1,7 @@
-import { PageHeader } from "@/components/ui-custom/page-header";
-import { Card, CardContent } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui-custom/empty-state";
-import { Bell } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { MarkReadButton } from "./mark-read-button";
+import { NotificationsClient } from "./notifications-client";
 
 export const dynamic = 'force-dynamic';
 
@@ -22,36 +19,34 @@ export default async function NotificationsPage() {
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
-  const hasUnread = notifications?.some(n => !n.is_read) || false;
+  const unreadCount = notifications?.filter(n => !n.is_read).length || 0;
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Notifications"
-        description="Stay updated with alerts and messages."
-        actions={hasUnread ? <MarkReadButton /> : undefined}
-      />
+    <div className="max-w-3xl mx-auto space-y-8 pb-10">
+      
+      {/* 1. HEADER */}
+      <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">Notifications</h1>
+            {unreadCount > 0 && (
+              <div className="bg-blue-100 text-blue-700 text-sm font-bold px-3 py-1 rounded-full border border-blue-200">
+                {unreadCount} unread
+              </div>
+            )}
+          </div>
+          <p className="text-slate-500 mt-2 text-base md:text-lg max-w-2xl font-medium">
+            Stay up to date with activity that matters to you.
+          </p>
+        </div>
+        <div>
+          {unreadCount > 0 && <MarkReadButton />}
+        </div>
+      </section>
 
-      <div className="space-y-3 max-w-3xl">
-        {notifications && notifications.length > 0 ? (
-          notifications.map((notification) => (
-            <Card key={notification.id} className={notification.is_read ? "bg-slate-50/50" : "border-blue-200 shadow-sm"}>
-              <CardContent className="p-4 flex items-start gap-4">
-                {!notification.is_read && <div className="mt-2 h-2 w-2 rounded-full bg-blue-600 flex-shrink-0" />}
-                <div className="flex-1">
-                  <h4 className={`text-base font-semibold ${notification.is_read ? "text-slate-700" : "text-slate-900"}`}>
-                    {notification.title}
-                  </h4>
-                  <p className="text-sm text-slate-600 mt-1">{notification.message}</p>
-                  <p className="text-xs text-slate-400 mt-2">{new Date(notification.created_at).toLocaleDateString()} {new Date(notification.created_at).toLocaleTimeString()}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <EmptyState icon={Bell} title="No notifications" description="You're all caught up!" />
-        )}
-      </div>
+      {/* 2. FEED */}
+      <NotificationsClient initialNotifications={notifications || []} />
+      
     </div>
   );
 }

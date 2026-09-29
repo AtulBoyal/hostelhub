@@ -1,12 +1,6 @@
-import { PageHeader } from "@/components/ui-custom/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StatusBadge } from "@/components/ui-custom/status-badge";
-import { PackageOpen } from "lucide-react";
-import { EmptyState } from "@/components/ui-custom/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { NeedHaveClient } from "./need-have-client";
 import { NewPostDialog } from "./new-post-dialog";
 
 export const dynamic = 'force-dynamic';
@@ -19,78 +13,42 @@ export default async function NeedHavePage() {
     redirect('/login');
   }
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('hostel_id, hostels(name)')
+    .eq('id', user.id)
+    .single();
+
+  if (!profile?.hostel_id) {
+    redirect('/onboarding');
+  }
+
+  const hostelName = (profile.hostels as any)?.name || 'Hostel';
+
   const { data: posts } = await supabase
     .from('need_have_posts')
     .select('*, profiles(name)')
     .order('created_at', { ascending: false });
 
-  const needs = posts?.filter(p => p.type === 'need') || [];
-  const haves = posts?.filter(p => p.type === 'have') || [];
-
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="I Need / I Have"
-        description="Borrow, lend, or give away items within your hostel."
-        actions={<NewPostDialog />}
-      />
+    <div className="max-w-4xl mx-auto space-y-8 pb-10">
+      
+      {/* 1. HEADER */}
+      <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">I Need / I Have</h1>
+          <p className="text-slate-500 mt-2 text-base md:text-lg max-w-2xl font-medium">
+            A simple way for {hostelName} residents to ask for something or offer something useful.
+          </p>
+        </div>
+        <div>
+          <NewPostDialog />
+        </div>
+      </section>
 
-      <Tabs defaultValue="needs" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="needs">I Need</TabsTrigger>
-          <TabsTrigger value="haves">I Have</TabsTrigger>
-        </TabsList>
-        <TabsContent value="needs" className="space-y-4">
-          {needs.length > 0 ? needs.map((item) => (
-            <Card key={item.id} className="border-l-4 border-l-blue-500">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg mb-1">{item.title}</CardTitle>
-                    <p className="text-sm text-slate-500">Requested by {item.profiles?.name} • {new Date(item.created_at).toLocaleDateString()}</p>
-                  </div>
-                  <StatusBadge status={item.status === 'active' ? 'warning' : 'success'}>
-                    {item.status}
-                  </StatusBadge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm mb-4 text-slate-600">{item.description}</p>
-                {item.status === 'active' && item.user_id !== user.id && (
-                  <Button variant="outline" size="sm" className="cursor-default hover:bg-transparent hover:text-inherit">Offer Item</Button>
-                )}
-              </CardContent>
-            </Card>
-          )) : (
-            <EmptyState icon={PackageOpen} title="No active needs" description="No one is looking for anything right now." />
-          )}
-        </TabsContent>
-        <TabsContent value="haves" className="space-y-4">
-          {haves.length > 0 ? haves.map((item) => (
-            <Card key={item.id} className="border-l-4 border-l-green-500">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg mb-1">{item.title}</CardTitle>
-                    <p className="text-sm text-slate-500">Offered by {item.profiles?.name} • {new Date(item.created_at).toLocaleDateString()}</p>
-                  </div>
-                  <StatusBadge status={item.status === 'active' ? 'success' : 'neutral'}>
-                    {item.status}
-                  </StatusBadge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm mb-4 text-slate-600">{item.description}</p>
-                {item.status === 'active' && item.user_id !== user.id && (
-                  <Button variant="outline" size="sm" className="cursor-default hover:bg-transparent hover:text-inherit">Request Item</Button>
-                )}
-              </CardContent>
-            </Card>
-          )) : (
-            <EmptyState icon={PackageOpen} title="No available items" description="No one has shared items recently." />
-          )}
-        </TabsContent>
-      </Tabs>
+      {/* 2. CLIENT-SIDE FEED (Search, Tabs, Category Filters, List) */}
+      <NeedHaveClient initialPosts={posts || []} currentUserId={user.id} />
+      
     </div>
   );
 }
