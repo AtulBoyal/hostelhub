@@ -73,17 +73,17 @@ const navigationGroups: NavGroup[] = [
   {
     name: "Community",
     items: [
-      { name: "I Need / I Have", href: "/need-have", icon: ArrowRightLeft },
-      { name: "Lost & Found", href: "/lost-found", icon: Search },
-      { name: "Community", href: "/community", icon: Users },
+      { name: "I Need / I Have", href: "/need-have", icon: ArrowRightLeft, prefetch: true },
+      { name: "Lost & Found", href: "/lost-found", icon: Search, prefetch: true },
+      { name: "Community", href: "/community", icon: Users, prefetch: true },
       { name: "Announcements", href: "/announcements", icon: Megaphone, prefetch: true },
     ]
   },
   {
     name: "Support",
     items: [
-      { name: "Emergency", href: "/emergency", icon: AlertTriangle, color: "text-red-600 group-hover:text-red-700", bgActive: "bg-red-50 text-red-700" },
-      { name: "Notifications", href: "/notifications", icon: Bell },
+      { name: "Emergency", href: "/emergency", icon: AlertTriangle, color: "text-red-600 group-hover:text-red-700", bgActive: "bg-red-50 text-red-700", prefetch: true },
+      { name: "Notifications", href: "/notifications", icon: Bell, prefetch: true },
     ]
   }
 ];
