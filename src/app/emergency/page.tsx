@@ -1,8 +1,16 @@
 import { Phone, ShieldAlert, HeartPulse, Building2, ChevronRight } from "lucide-react";
+import { getCachedAuthUser } from "@/lib/auth-user";
+import { redirect } from "next/navigation";
 
 export const dynamic = 'force-static';
 
-export default function EmergencyPage() {
+export default async function EmergencyPage() {
+  const { user } = await getCachedAuthUser();
+  
+  if (!user) {
+    redirect('/login');
+  }
+
   const urgentContacts = [
     { 
       id: 1, 

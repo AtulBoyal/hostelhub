@@ -6,14 +6,15 @@ import { StatusBadge } from "@/components/ui-custom/status-badge";
 import { Search } from "lucide-react";
 import { EmptyState } from "@/components/ui-custom/empty-state";
 import { createClient } from "@/lib/supabase/server";
+import { getCachedAuthUser } from "@/lib/auth-user";
 import { redirect } from "next/navigation";
 import { ReportDialog } from "./report-dialog";
 
 export const dynamic = 'force-dynamic';
 
 export default async function LostFoundPage() {
+  const { user } = await getCachedAuthUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     redirect('/login');

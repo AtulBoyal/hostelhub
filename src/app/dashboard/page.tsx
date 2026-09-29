@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getCachedAuthUser } from "@/lib/auth-user";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = 'force-dynamic';
@@ -24,22 +25,11 @@ function getGreeting() {
 }
 
 export default async function DashboardPage() {
+  const { user, profile } = await getCachedAuthUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    return redirect('/login');
-  }
-
-  // Fetch user profile
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*, hostels(name), floors(floor_number)')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile) {
-    return redirect('/onboarding');
+  if (!user || !profile) {
+    return redirect(user ? '/onboarding' : '/login');
   }
 
   const hostelName = profile.hostels?.name || 'Unknown Hostel';
@@ -272,7 +262,7 @@ export default async function DashboardPage() {
           <div className="bg-white border border-slate-200 rounded-[24px] overflow-hidden shadow-sm">
             {announcements && announcements.length > 0 ? (
               <div className="divide-y divide-slate-100">
-                {announcements.map((item) => {
+                {announcements.map((item: any) => {
                   const isUrgent = item.priority === "urgent" || item.priority === "important";
                   return (
                     <Link key={item.id} href={`/announcements`} className="block p-5 hover:bg-slate-50/80 transition-colors group">
@@ -328,7 +318,7 @@ export default async function DashboardPage() {
           <div className="bg-white border border-slate-200 rounded-[24px] overflow-hidden shadow-sm">
             {needs && needs.length > 0 ? (
               <div className="divide-y divide-slate-100">
-                {needs.map((item) => (
+                {needs.map((item: any) => (
                   <Link key={item.id} href={`/need-have`} className="block p-5 hover:bg-slate-50/80 transition-colors group">
                     <div className="flex items-start gap-4">
                       <div className="h-10 w-10 shrink-0 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">

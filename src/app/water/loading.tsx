@@ -1,23 +1,23 @@
+import { Skeleton } from "@/components/ui/skeleton";
+
 export default function WaterLoading() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-10">
-      {/* Header Skeleton */}
-      <div className="space-y-3 mt-4">
-        <div className="animate-pulse bg-slate-200 h-10 w-56 rounded-md" />
-        <div className="animate-pulse bg-slate-200 h-5 w-72 rounded-md" />
+      <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-4">
+        <div>
+          <Skeleton className="h-10 w-48 mb-2" />
+          <Skeleton className="h-6 w-64" />
+        </div>
+      </section>
+
+      <div className="flex gap-3">
+        <Skeleton className="h-8 w-32 rounded-full" />
+        <Skeleton className="h-8 w-32 rounded-full" />
       </div>
 
-      {/* Summary Skeleton */}
-      <div className="flex gap-4">
-        {[1, 2].map((i) => (
-          <div key={i} className="animate-pulse bg-slate-200 h-8 w-28 rounded-full" />
-        ))}
-      </div>
-
-      {/* Grid Skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="animate-pulse bg-slate-200 h-48 w-full rounded-3xl" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {[...Array(6)].map((_, i) => (
+          <Skeleton key={i} className="h-40 rounded-3xl" />
         ))}
       </div>
     </div>

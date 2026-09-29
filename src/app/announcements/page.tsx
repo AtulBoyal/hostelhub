@@ -1,28 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCachedAuthUser } from "@/lib/auth-user";
 import { redirect } from "next/navigation";
 import { AnnouncementsClient } from "./announcements-client";
 
 export const dynamic = 'force-dynamic';
 
 export default async function AnnouncementsPage() {
+  const { user, profile } = await getCachedAuthUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect('/login');
+  if (!user || !profile?.hostel_id) {
+    redirect(user ? '/onboarding' : '/login');
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('hostel_id, hostels(name)')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile?.hostel_id) {
-    redirect('/onboarding');
-  }
-
-  const hostelName = (profile.hostels as any)?.name || 'Hostel';
+  const hostelName = profile.hostels?.name || 'Hostel';
 
   const { data: announcements } = await supabase
     .from('announcements')

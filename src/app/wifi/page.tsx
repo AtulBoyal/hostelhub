@@ -1,32 +1,21 @@
 import { Wifi, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getCachedAuthUser } from "@/lib/auth-user";
 import { redirect } from "next/navigation";
 import { WifiReportDialog } from "./wifi-report-dialog";
 
 export const dynamic = 'force-dynamic';
 
 export default async function WifiPage() {
+  const { user, profile } = await getCachedAuthUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect('/login');
+  if (!user || !profile?.hostel_id) {
+    redirect(user ? '/onboarding' : '/login');
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*, hostels(name)')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile?.hostel_id) {
-    redirect('/onboarding');
-  }
-
-  const hostelName = (profile.hostels as any)?.name || 'Hostel';
-  const myFloor = profile.floor_id 
-    ? (await supabase.from('floors').select('floor_number').eq('id', profile.floor_id).single()).data?.floor_number 
-    : '?';
+  const hostelName = profile.hostels?.name || 'Hostel';
+  const myFloor = profile.floors?.floor_number || '?';
 
   // Fetch floors and active/recent Wi-Fi issues in parallel
   const [

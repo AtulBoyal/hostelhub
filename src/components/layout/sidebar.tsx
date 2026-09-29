@@ -40,20 +40,34 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { logout } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 
-const navigationGroups = [
+type NavItem = {
+  name: string;
+  href: string;
+  icon: any;
+  prefetch?: boolean;
+  color?: string;
+  bgActive?: string;
+};
+
+type NavGroup = {
+  name: string;
+  items: NavItem[];
+};
+
+const navigationGroups: NavGroup[] = [
   {
     name: "Main",
     items: [
-      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, prefetch: true },
     ]
   },
   {
     name: "Hostel",
     items: [
-      { name: "Laundry", href: "/laundry", icon: WashingMachine },
-      { name: "Maintenance", href: "/maintenance", icon: Wrench },
-      { name: "Water", href: "/water", icon: Droplets },
-      { name: "Wi-Fi", href: "/wifi", icon: Wifi },
+      { name: "Laundry", href: "/laundry", icon: WashingMachine, prefetch: true },
+      { name: "Maintenance", href: "/maintenance", icon: Wrench, prefetch: true },
+      { name: "Water", href: "/water", icon: Droplets, prefetch: true },
+      { name: "Wi-Fi", href: "/wifi", icon: Wifi, prefetch: true },
     ]
   },
   {
@@ -62,7 +76,7 @@ const navigationGroups = [
       { name: "I Need / I Have", href: "/need-have", icon: ArrowRightLeft },
       { name: "Lost & Found", href: "/lost-found", icon: Search },
       { name: "Community", href: "/community", icon: Users },
-      { name: "Announcements", href: "/announcements", icon: Megaphone },
+      { name: "Announcements", href: "/announcements", icon: Megaphone, prefetch: true },
     ]
   },
   {
@@ -145,6 +159,7 @@ export function Sidebar({ isCollapsed = false, setIsCollapsed, profile, unreadCo
                     const LinkContent = (
                       <Link
                         href={item.href}
+                        prefetch={item.prefetch}
                         className={cn(
                           isActive
                             ? activeClass

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCachedAuthUser } from "@/lib/auth-user";
 import { redirect } from "next/navigation";
 import { ensureWashingMachines } from "../actions/laundry";
 import { WashingMachine, Clock, Wrench, AlertTriangle, PlayCircle } from "lucide-react";
@@ -11,29 +12,18 @@ import { buttonVariants } from "@/components/ui/button";
 export const dynamic = 'force-dynamic';
 
 export default async function LaundryPage() {
+  const { user, profile } = await getCachedAuthUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect('/login');
-  }
-
-  // Get user profile for hostel_id
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('hostel_id, hostels(name), floors(floor_number)')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile?.hostel_id) {
-    redirect('/onboarding');
+  if (!user || !profile?.hostel_id) {
+    redirect(user ? '/onboarding' : '/login');
   }
 
   // Auto-heal the database: ensures exactly 1 washing machine per floor for this hostel exists
   await ensureWashingMachines(profile.hostel_id);
 
-  const hostelName = (profile.hostels as any)?.name || 'Hostel';
-  const myFloor = (profile.floors as any)?.floor_number || '?';
+  const hostelName = profile.hostels?.name || 'Hostel';
+  const myFloor = profile.floors?.floor_number || '?';
 
   // Fetch all floors and active maintenance issues in parallel
   const [

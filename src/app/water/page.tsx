@@ -1,5 +1,6 @@
 import { Droplets, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getCachedAuthUser } from "@/lib/auth-user";
 import { redirect } from "next/navigation";
 import { ensurePurifiers } from "../actions/water";
 import { PurifierDetailDialog } from "./purifier-detail-dialog";
@@ -7,21 +8,11 @@ import { PurifierDetailDialog } from "./purifier-detail-dialog";
 export const dynamic = 'force-dynamic';
 
 export default async function WaterPage() {
+  const { user, profile } = await getCachedAuthUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect('/login');
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*, hostels(name)')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile?.hostel_id) {
-    redirect('/onboarding');
+  if (!user || !profile?.hostel_id) {
+    redirect(user ? '/onboarding' : '/login');
   }
 
   // Auto-heal the database: ensures exactly 1 purifier per floor for this hostel exists

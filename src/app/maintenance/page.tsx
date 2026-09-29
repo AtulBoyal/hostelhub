@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCachedAuthUser } from "@/lib/auth-user";
 import { redirect } from "next/navigation";
 import { MaintenanceClient } from "./maintenance-client";
 import { NewIssueDialog } from "./new-issue-dialog";
@@ -6,21 +7,11 @@ import { NewIssueDialog } from "./new-issue-dialog";
 export const dynamic = 'force-dynamic';
 
 export default async function MaintenancePage() {
+  const { user, profile } = await getCachedAuthUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect('/login');
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('hostel_id, hostels(name), floors(floor_number)')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile?.hostel_id) {
-    redirect('/onboarding');
+  if (!user || !profile?.hostel_id) {
+    redirect(user ? '/onboarding' : '/login');
   }
 
   // Fetch all issues for this hostel
@@ -30,8 +21,8 @@ export default async function MaintenancePage() {
     .eq('hostel_id', profile.hostel_id)
     .order('created_at', { ascending: false });
 
-  const hostelName = (profile.hostels as any)?.name || 'Hostel';
-  const myFloor = (profile.floors as any)?.floor_number || '?';
+  const hostelName = profile.hostels?.name || 'Hostel';
+  const myFloor = profile.floors?.floor_number || '?';
   const totalIssues = issues || [];
 
   return (

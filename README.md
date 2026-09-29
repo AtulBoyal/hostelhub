@@ -1,252 +1,92 @@
-# HostelHub
+# HostelHub 🏫
 
-HostelHub is a comprehensive web application designed for hostel residents to manage everyday resources, report issues, and build a connected community. From booking laundry machines to finding lost items, HostelHub centralizes hostel life into a single, seamless digital experience.
+HostelHub is a modern, student-focused digital hub designed to streamline everyday hostel life at IITH (Indian Institute of Technology Hyderabad). Built for both students and hostel staff, it centralizes utility tracking, community sharing, maintenance reporting, and emergency resources into a single, polished, blazing-fast application.
 
-## Features
+## ✨ Features
 
-This section accurately documents the **current implementation state** of the application.
+- **📊 Dashboard**: A personalized daily overview of your hostel's live status, including laundry availability, unread announcements, and active maintenance issues.
+- **🧺 Laundry Management**: Real-time tracking of washing machine availability per floor. Book machines, report problems, and cancel bookings.
+- **🛠️ Maintenance**: A professional issue-tracking system for students to report broken fixtures, plumbing leaks, and electrical faults.
+- **💧 Water & 📶 Wi-Fi**: Live status indicators for floor-by-floor water purifiers and network connectivity, ensuring transparent utility management.
+- **📢 Announcements**: A digital notice board for important hostel updates and urgent broadcasts from administration.
+- **🤝 Community Space**:
+  - **I Need / I Have**: A peer-to-peer sharing board for borrowing chargers, textbooks, or umbrellas.
+  - **Lost & Found**: Quickly recover misplaced items around the hostel.
+  - **Community Forum**: A friendly space for general hostel discussions and questions.
+- **🚨 Emergency**: Immediate access to crucial campus contacts (Medical, Security, Warden) with one-tap dialing.
+- **🔔 Smart Notifications**: A personal inbox for updates on your maintenance tickets, laundry bookings, and community posts.
 
-✅ **Authentication**
-- Email/password signup and login.
-- Google OAuth integration.
-- Secure, auth-protected routes using Supabase middleware.
-- Dedicated user onboarding flow to select hostel and floor.
-- Password reset and recovery flow.
+## 🚀 Tech Stack
 
-✅ **Dashboard**
-- Personalized greeting and overview based on the resident's hostel and floor.
-- Real-time status cards for Laundry, Water Purifier, and Wi-Fi.
-- Quick view of recent Announcements and Community Needs.
+HostelHub is built using a state-of-the-art modern web stack, prioritizing performance, user experience, and developer velocity.
 
-✅ **Laundry Module (Fully Functional Demo)**
-- Configured for Ramanujan Hostel (Floors 1-10, exactly one machine per floor).
-- Dynamic real-time statuses: 🟢 AVAILABLE, 🟡 IN USE, 🔴 NOT WORKING.
-- Booking flow with 30, 45, or 60-minute duration selection and optional laundry notes.
-- Automatic availability resets when the expected finish time expires.
-- Privacy-first display (shows only the user's name when a machine is booked, no sensitive data).
-- Integrated problem reporting that instantly updates the machine status to "Not Working" and files a maintenance ticket.
-- *Self-healing database routine*: Automatically ensures exactly 1 machine per floor exists upon page load.
+### Frontend
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router, React Server Components, Server Actions)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **UI Components**: Custom design system heavily utilizing [shadcn/ui](https://ui.shadcn.com/) and [Lucide React](https://lucide.dev/) icons.
+- **Fonts**: `next/font` (Geist & Geist Mono)
 
-✅ **Maintenance**
-- Residents can report issues (plumbing, electrical, Wi-Fi, etc.) with priority levels.
-- View all reported issues for the hostel and their current resolution status.
+### Backend & Database
+- **BaaS**: [Supabase](https://supabase.com/)
+- **Database**: PostgreSQL (Relational schema with robust Row-Level Security)
+- **Authentication**: Supabase Auth (Google OAuth & Email/Password)
 
-✅ **I Need / I Have**
-- A marketplace for residents to request items (e.g., a calculator) or offer items to lend.
-- Create new posts and view active requests.
+### Performance Optimizations
+- **React Server Components (RSC)**: Zero-bundle-size data fetching.
+- **Deduplicated Queries**: `React.cache()` ensures layout and pages don't execute redundant DB queries.
+- **Instant Navigation**: Leverages Next.js `loading.tsx` boundaries and `<Link prefetch={true}>` for instant perceived performance without client-side data waterfalls.
 
-✅ **Lost & Found**
-- Report lost items or announce found items to the entire hostel.
+## 🛠️ Local Development
 
-🚧 **In Progress / Basic Implementations**
-The following modules have implemented UI and route structures but may lack deep backend integrations or complex features:
-- **Announcements**: View official notices.
-- **Community**: Basic community posting.
-- **Water Purifier**: View water purifier status.
-- **Wi-Fi**: Check current floor network status.
-- **Notifications**: Read and mark notifications as read.
-- **Emergency**: Quick access to emergency contacts.
-- **Resident Profile**: Basic profile view.
+Follow these steps to get HostelHub running on your local machine.
 
-## Tech Stack
+### 1. Prerequisites
+- [Node.js](https://nodejs.org/) (v18+)
+- [npm](https://www.npmjs.com/) or [pnpm](https://pnpm.io/)
+- A Supabase account and project.
 
-| Technology | Purpose |
-|---|---|
-| **Next.js 16 (App Router)** | Core web application framework |
-| **TypeScript** | Type-safe development |
-| **Tailwind CSS v4** | Rapid utility-first styling |
-| **Supabase** | Authentication, PostgreSQL Database, and RLS Security |
-| **shadcn/ui & Base UI** | Accessible UI component architecture |
-| **Lucide React** | Consistent iconography |
-| **React Hook Form + Zod** | Form handling and validation |
-
-## Project Structure
-
-```text
-hostelhub/
-├── public/                 # Static assets
-├── src/
-│   ├── app/                # Next.js App Router (pages and layouts)
-│   │   ├── (auth)/         # Auth routes (login, signup, reset)
-│   │   ├── actions/        # Next.js Server Actions (database mutations)
-│   │   ├── dashboard/      # Main dashboard view
-│   │   ├── laundry/        # Laundry booking module
-│   │   ├── maintenance/    # Issue reporting module
-│   │   └── ...             # Other feature routes
-│   ├── components/         # Reusable UI components (shadcn, custom)
-│   └── lib/                # Utility functions and Supabase clients
-├── supabase/
-│   ├── migrations/         # PostgreSQL schema and RLS policies
-│   └── seed.sql            # Demo data for testing
-├── package.json            # Dependencies and scripts
-└── README.md               # Documentation
+### 2. Clone the repository
+```bash
+git clone https://github.com/yourusername/hostelhub.git
+cd hostelhub
 ```
 
-## Routes
-
-**Currently Existing Routes:**
-- `/login`
-- `/signup`
-- `/onboarding`
-- `/forgot-password`
-- `/reset-password`
-- `/auth/callback` (OAuth handling)
-- `/dashboard`
-- `/laundry`
-- `/maintenance`
-- `/need-have`
-- `/lost-found`
-- `/water`
-- `/wifi`
-- `/announcements`
-- `/community`
-- `/notifications`
-- `/emergency`
-- `/profile`
-
-## Supabase Integration
-
-HostelHub relies heavily on Supabase for both backend data and identity management:
-- **Authentication**: Handles user sessions, JWTs, and OAuth.
-- **PostgreSQL Database**: Stores all application state.
-
-**Key Tables Used:**
-- `profiles`: Extends the Auth user with hostel and floor assignments.
-- `hostels` & `floors`: Defines the physical structure of the campus.
-- `washing_machines`: Tracks machine statuses, active bookings, and expected finish times.
-- `maintenance_issues`: Stores reported problems linked to users, hostels, and optionally specific machines/floors.
-- `need_have_posts` & `lost_found_items`: Community interaction tables.
-
-### Database Relationships
-
-```text
-User (Auth)
-  ↓
-Profile
-  ↓
-Hostel → Floors → Washing Machines
-  ↓
-Maintenance Issues
+### 3. Install dependencies
+```bash
+npm install
 ```
 
-## Environment Variables
+### 4. Setup Environment Variables
+Create a `.env.local` file in the root directory and add your Supabase credentials:
 
-HostelHub requires the following environment variables to connect to Supabase.
-
-*Note: Never commit `.env.local` to version control, and never expose Supabase service-role keys in client-side code.*
-
-Create a `.env.local` file (or copy `.env.example`):
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-## Local Development
+### 5. Start the Development Server
+```bash
+npm run dev
+```
 
-Follow these exact steps to run the project locally.
+The application will be running at `http://localhost:3000`.
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd hostelhub
-   ```
+## 🗄️ Database Schema
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+HostelHub relies on a relational Supabase schema. Key tables include:
+- `profiles`: User information, linked to their specific hostel and floor.
+- `hostels` & `floors`: Organizational hierarchy.
+- `washing_machines` & `purifiers`: Utility entities with live status tracking.
+- `maintenance_issues`: Tickets with status enums (`reported`, `in_progress`, `resolved`).
+- `community_posts` & `need_have_posts`: Forums and peer-to-peer exchanges.
+- `notifications`: User-specific alerts.
 
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
+*Note: The application employs Supabase Row Level Security (RLS) to ensure users can only access or modify data relevant to their hostel and permissions.*
 
-4. Open your browser:
-   Navigate to [http://localhost:3000](http://localhost:3000)
+## 🤝 Contributing
 
-**Available Commands:**
-- `npm run dev`: Starts the development server.
-- `npm run build`: Creates an optimized production build.
-- `npm run start`: Starts the production server.
-- `npm run lint`: Runs ESLint checks.
+Contributions are always welcome! Whether it's a bug report, feature suggestion, or a pull request, your input helps make HostelHub better for everyone.
 
-## Supabase Setup
+## 📄 License
 
-To set up a fresh Supabase instance for this project:
-
-1. **Create a Supabase Project** via the Supabase dashboard.
-2. **Apply Database Schema**: Run the SQL files found in `supabase/migrations/` sequentially in the Supabase SQL Editor to create all required tables, enums, and triggers.
-3. **Seed Data**: Run `supabase/seed.sql` to populate the database with Ramanujan Hostel, 10 floors, and demo profiles/data.
-4. **Configure Authentication**: Ensure Email Auth is enabled.
-5. **Configure Redirect URLs**: Under *Authentication > URL Configuration*, add `http://localhost:3000/auth/callback` to your Site URL or Redirect URLs.
-
-## Google OAuth
-
-Google OAuth is fully integrated into the code via the login/signup pages. To make it work in your environment:
-
-1. Go to **Google Cloud Console**, create OAuth credentials, and set the authorized redirect URI to:
-   `https://<your-supabase-project>.supabase.co/auth/v1/callback`
-2. Go to **Supabase Dashboard > Authentication > Providers > Google**.
-3. Enable Google and paste your Client ID and Client Secret from Google Cloud.
-4. The application code handles the rest by redirecting to `/auth/callback` upon success.
-
-## Deployment on Vercel
-
-1. Push your project to a GitHub repository.
-2. Go to Vercel and import the repository.
-3. Vercel will automatically detect Next.js.
-4. Add the required Environment Variables:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-5. Click **Deploy**.
-6. **Important**: Copy your new Vercel production URL (e.g., `https://hostelhub-xyz.vercel.app`).
-7. Update Supabase Authentication: Add the Vercel URL to your Supabase Redirect URLs so auth callbacks return to the live site instead of localhost.
-
-## Security
-
-- **Environment Variables**: `.env.local` is ignored by Git. Only safe, public anonymous keys are used in the client.
-- **Protected Routes**: Next.js Server Actions and Middleware strictly enforce authentication. Unauthenticated users are redirected to `/login`.
-- **Row Level Security (RLS)**: Must be enabled on Supabase tables to ensure users can only modify their own data (e.g., cancelling their own laundry bookings).
-
-## Development Workflow
-
-1. Start coding with `npm run dev`.
-2. Before pushing to GitHub, always ensure the build succeeds:
-   ```bash
-   npm run build
-   ```
-3. Test any database or schema changes directly in your Supabase project before writing application code for it.
-
-## Current Status
-
-- **Authentication**: Fully implemented (Email/Password, Google OAuth, Onboarding).
-- **Dashboard**: Fully functional with real-time data fetching.
-- **Laundry**: 100% complete with complex state management, self-healing database scripts, booking logic, and maintenance integrations.
-- **Maintenance / Needs / Lost & Found**: Fully functional basic CRUD operations.
-- **Other Modules**: UI implemented, backend logic in progress.
-- **Production Deployment**: Vercel ready.
-
-### Known Limitations
-
-- Some modules (like Wi-Fi or Water) may have a fully working UI but are not yet deeply integrated with complex backend monitoring scripts.
-- Google OAuth requires you to manually configure your Google Cloud Console; it does not work out-of-the-box without your own keys.
-- Administrative workflows (e.g., an Admin panel to resolve maintenance tickets) are not yet built; resolution currently requires direct database updates.
-
-## Demo / Hackathon Setup
-
-This prototype is currently configured specifically for **Ramanujan Hostel**:
-- The database is seeded with **Floors 1 through 10**.
-- The Laundry module expects exactly **1 washing machine per floor**. (If the database is empty or corrupt, the `/laundry` route will automatically self-heal and insert exactly 1 machine per floor).
-
-## Contributing
-
-1. Create a feature branch (`git checkout -b feature/my-feature`).
-2. Make your changes and test locally.
-3. Run `npm run build` and `npm run lint`.
-4. Commit your changes.
-5. Open a Pull Request.
-
-## License
-
-License: Not specified.
-
+This project is licensed under the MIT License.

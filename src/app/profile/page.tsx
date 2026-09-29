@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCachedAuthUser } from "@/lib/auth-user";
 import { redirect } from "next/navigation";
 import { Building2, Layers, DoorOpen, Award, Mail } from "lucide-react";
 import { LogoutButton } from "./logout-button";
@@ -6,22 +7,10 @@ import { LogoutButton } from "./logout-button";
 export const dynamic = 'force-dynamic';
 
 export default async function ProfilePage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { user, profile } = await getCachedAuthUser();
 
-  if (!user) {
-    redirect('/login');
-  }
-
-  // Fetch real user profile
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*, hostels(name), floors(floor_number)')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile) {
-    redirect('/onboarding');
+  if (!user || !profile) {
+    redirect(user ? '/onboarding' : '/login');
   }
 
   const hostelName = profile.hostels?.name || 'Unknown Hostel';

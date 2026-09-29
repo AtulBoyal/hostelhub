@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getCachedAuthUser } from "@/lib/auth-user";
 import { redirect } from "next/navigation";
 import { MarkReadButton } from "./mark-read-button";
 import { NotificationsClient } from "./notifications-client";
@@ -6,8 +7,8 @@ import { NotificationsClient } from "./notifications-client";
 export const dynamic = 'force-dynamic';
 
 export default async function NotificationsPage() {
+  const { user } = await getCachedAuthUser();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     redirect('/login');
