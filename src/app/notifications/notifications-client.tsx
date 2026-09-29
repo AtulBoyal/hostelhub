@@ -4,8 +4,17 @@ import { useTransition, useState } from 'react'
 import { Bell, Wrench, WashingMachine, Megaphone, Users, Search, Droplets, Wifi, AlertCircle } from 'lucide-react'
 import { markNotificationAsRead } from '@/app/actions/notifications'
 
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  is_read: boolean;
+  created_at: string;
+}
+
 interface Props {
-  initialNotifications: any[]
+  initialNotifications: Notification[]
 }
 
 function getNotificationIcon(type: string) {
@@ -77,8 +86,8 @@ export function NotificationsClient({ initialNotifications }: Props) {
         <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
           <Bell className="h-8 w-8 text-slate-300" />
         </div>
-        <p className="text-base font-bold text-slate-900">You're all caught up</p>
-        <p className="text-sm text-slate-500 mt-1">You don't have any notifications right now.</p>
+        <p className="text-base font-bold text-slate-900">You&apos;re all caught up</p>
+        <p className="text-sm text-slate-500 mt-1">You don&apos;t have any notifications right now.</p>
       </div>
     )
   }

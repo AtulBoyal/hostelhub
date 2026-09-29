@@ -204,7 +204,7 @@ export function Sidebar({ isCollapsed = false, setIsCollapsed, profile, unreadCo
 
                     if (isCollapsed) {
                       return (
-                        <Tooltip>
+                        <Tooltip key={item.name}>
                           <TooltipTrigger>
                             {LinkContent}
                           </TooltipTrigger>

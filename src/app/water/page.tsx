@@ -18,7 +18,7 @@ export default async function WaterPage() {
   // Auto-heal the database: ensures exactly 1 purifier per floor for this hostel exists
   await ensurePurifiers(profile.hostel_id);
 
-  const hostelName = (profile.hostels as any)?.name || 'Hostel';
+  const hostelName = (profile.hostels as { name: string })?.name || 'Hostel';
 
   // Fetch all floors and active maintenance issues in parallel
   const [
@@ -57,7 +57,7 @@ export default async function WaterPage() {
 
   const floorsData = floors.map(floor => {
     // Expect exactly 1 purifier per floor based on our requirement
-    const purifier = (floor.purifiers as any)?.[0] || null;
+    const purifier = (floor.purifiers as { status: string }[])?.[0] || null;
     let computedStatus = 'working';
     let activeIssue = null;
 

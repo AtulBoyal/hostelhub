@@ -33,7 +33,7 @@ export async function bookMachine(machineId: string, durationMinutes: number = 3
   const startTime = new Date()
   const expectedFinishTime = new Date(startTime.getTime() + durationMinutes * 60000)
 
-  const { data: updateData, error: updateError } = await supabase
+  let query = supabase
     .from('washing_machines')
     .update({
       status: 'running',
@@ -43,8 +43,15 @@ export async function bookMachine(machineId: string, durationMinutes: number = 3
       instruction: instruction || null
     })
     .eq('id', machineId)
-    .in('status', ['available', 'running'])
-    .select()
+    .eq('status', machine.status)
+
+  if (machine.expected_finish_time) {
+    query = query.eq('expected_finish_time', machine.expected_finish_time)
+  } else {
+    query = query.is('expected_finish_time', null)
+  }
+
+  const { data: updateData, error: updateError } = await query.select()
 
   if (updateError || !updateData || updateData.length === 0) {
     return { error: 'This machine was just booked by someone else.' }

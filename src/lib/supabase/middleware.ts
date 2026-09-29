@@ -34,9 +34,13 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup')
+  const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password', '/auth/callback'];
+  const isAuthRoute = authRoutes.some(route => request.nextUrl.pathname.startsWith(route));
 
-  if (!user && !isAuthRoute) {
+  // If going to the root URL (marketing/landing page), let them through or redirect to login
+  const isRoot = request.nextUrl.pathname === '/';
+
+  if (!user && !isAuthRoute && !isRoot) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/login'

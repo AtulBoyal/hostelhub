@@ -38,6 +38,12 @@ export default function OnboardingPage() {
         setDefaultName(user.user_metadata.full_name);
       }
       
+      const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single();
+      if (profile) {
+        window.location.href = '/dashboard';
+        return;
+      }
+      
       const { data: hostelData } = await supabase.from('hostels').select('*').order('name');
       if (hostelData) {
         setHostels(hostelData);

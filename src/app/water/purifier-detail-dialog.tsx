@@ -16,7 +16,7 @@ import Link from 'next/link'
 import { buttonVariants } from '@/components/ui/button'
 
 interface Props {
-  floor: any
+  floor: { id: string; floor_number: number; computedStatus: string; activeIssue?: { title: string; created_at: string }; purifier?: { id: string; status: string } }
   hostelId: string
   children: React.ReactNode
 }
@@ -26,10 +26,13 @@ export function PurifierDetailDialog({ floor, hostelId, children }: Props) {
   
   const purifier = floor.purifier
   const isWorking = floor.computedStatus === 'working'
+  
+  if (!purifier) return null
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={children as any} />
+      {/* @ts-expect-error shadcn trigger */}
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[450px] rounded-3xl p-0 overflow-hidden bg-white">
         
         {/* Header Area */}

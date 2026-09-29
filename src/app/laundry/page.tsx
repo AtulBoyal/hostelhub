@@ -64,14 +64,13 @@ export default async function LaundryPage() {
   }
 
   // Find the active booking for the current user
-  let activeBooking: any = null;
   const now = new Date();
 
   const floorsData = floors.map(floor => {
     // Expect exactly 1 machine per floor based on our requirement
     const machine = (floor.washing_machines as any)?.[0] || null;
     let computedStatus = 'available';
-    let timeRemaining = null;
+    const timeRemaining = null;
     let expectedFinish = null;
     let isMyBooking = false;
     let activeIssue = null;
@@ -94,15 +93,6 @@ export default async function LaundryPage() {
         }
       }
       
-      if (isMyBooking && computedStatus === 'in_use') {
-        activeBooking = {
-          floorNumber: floor.floor_number,
-          machineId: machine.id,
-          startTime: machine.start_time,
-          expectedFinishTime: machine.expected_finish_time,
-          instruction: machine.instruction
-        }
-      }
     }
 
     return {
@@ -111,13 +101,22 @@ export default async function LaundryPage() {
       computedStatus,
       expectedFinish,
       isMyBooking,
-      activeIssue
+      activeIssue,
+      activeBookingData: isMyBooking && computedStatus === 'in_use' ? {
+        floorNumber: floor.floor_number,
+        machineId: machine.id,
+        startTime: machine.start_time,
+        expectedFinishTime: machine.expected_finish_time,
+        instruction: machine.instruction
+      } : null
     }
   });
 
   const availableCount = floorsData.filter(f => f.computedStatus === 'available').length;
   const inUseCount = floorsData.filter(f => f.computedStatus === 'in_use').length;
   const brokenCount = floorsData.filter(f => f.computedStatus === 'not_working').length;
+  
+  const activeBooking = floorsData.find(f => f.activeBookingData)?.activeBookingData || null;
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-10">
@@ -171,7 +170,7 @@ export default async function LaundryPage() {
                 <span>Available at {new Date(activeBooking.expectedFinishTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
               {activeBooking.instruction && (
-                <p className="mt-3 text-sm text-amber-800 italic bg-amber-100/50 inline-block px-3 py-1.5 rounded-md">"{activeBooking.instruction}"</p>
+                <p className="mt-3 text-sm text-amber-800 italic bg-amber-100/50 inline-block px-3 py-1.5 rounded-md">&quot;{activeBooking.instruction}&quot;</p>
               )}
               <div className="mt-6">
                 <CancelBookingDialog machineId={activeBooking.machineId} />
@@ -242,7 +241,7 @@ export default async function LaundryPage() {
                         <p><span className="text-slate-400">Started</span> {m.start_time ? new Date(m.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</p>
                         <p><span className="text-slate-400">Available at</span> {floor.expectedFinish ? floor.expectedFinish.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</p>
                         {m.instruction && (
-                          <p className="italic text-slate-500 mt-2">"{m.instruction}"</p>
+                          <p className="italic text-slate-500 mt-2">&quot;{m.instruction}&quot;</p>
                         )}
                       </div>
                     </div>

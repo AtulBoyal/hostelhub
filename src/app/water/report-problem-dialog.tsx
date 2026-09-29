@@ -33,7 +33,8 @@ export function ReportProblemDialog({ purifierId, floorId, hostelId, floorNumber
   // Watch for success state
   useEffect(() => {
     if (state?.success) {
-      setSuccessMode(true)
+      const timer = setTimeout(() => setSuccessMode(true), 0);
+      return () => clearTimeout(timer);
     }
   }, [state])
 
