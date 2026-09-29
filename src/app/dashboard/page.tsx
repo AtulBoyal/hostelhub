@@ -32,60 +32,65 @@ export default async function DashboardPage() {
   const hostelName = profile.hostels?.name || 'Unknown Hostel';
   const floorNumber = profile.floors?.floor_number || 'Unknown';
 
-  // Fetch Laundry (active machine on floor)
-  const { data: machines } = await supabase
-    .from('washing_machines')
-    .select('*')
-    .eq('floor_id', profile.floor_id)
-    .in('status', ['running', 'available'])
-    .order('status', { ascending: false }) // running first
-    .limit(1);
+  // Fetch Dashboard Data in Parallel
+  const [
+    { data: machines },
+    { data: purifiers },
+    { data: wifiIssues },
+    { data: maintenance },
+    { data: announcements },
+    { data: needs }
+  ] = await Promise.all([
+    supabase
+      .from('washing_machines')
+      .select('*')
+      .eq('floor_id', profile.floor_id)
+      .in('status', ['running', 'available'])
+      .order('status', { ascending: false }) // running first
+      .limit(1),
+    
+    supabase
+      .from('purifiers')
+      .select('*')
+      .eq('floor_id', profile.floor_id)
+      .limit(1),
+
+    supabase
+      .from('maintenance_issues')
+      .select('*')
+      .eq('hostel_id', profile.hostel_id)
+      .eq('category', 'wifi')
+      .in('status', ['reported', 'in_progress'])
+      .order('created_at', { ascending: false })
+      .limit(1),
+
+    supabase
+      .from('maintenance_issues')
+      .select('*')
+      .eq('hostel_id', profile.hostel_id)
+      .order('created_at', { ascending: false })
+      .limit(1),
+
+    supabase
+      .from('announcements')
+      .select('*')
+      .eq('hostel_id', profile.hostel_id)
+      .order('created_at', { ascending: false })
+      .limit(3),
+
+    supabase
+      .from('need_have_posts')
+      .select('*, profiles(name)')
+      .eq('type', 'need')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(3)
+  ]);
+
   const activeMachine = machines?.[0] || null;
-
-  // Fetch Water Purifier
-  const { data: purifiers } = await supabase
-    .from('purifiers')
-    .select('*')
-    .eq('floor_id', profile.floor_id)
-    .limit(1);
   const purifier = purifiers?.[0] || null;
-
-  // Fetch Wifi Issue
-  const { data: wifiIssues } = await supabase
-    .from('maintenance_issues')
-    .select('*')
-    .eq('hostel_id', profile.hostel_id)
-    .eq('category', 'wifi')
-    .in('status', ['reported', 'in_progress'])
-    .order('created_at', { ascending: false })
-    .limit(1);
   const wifiIssue = wifiIssues?.[0] || null;
-
-  // Fetch Recent Maintenance
-  const { data: maintenance } = await supabase
-    .from('maintenance_issues')
-    .select('*')
-    .eq('hostel_id', profile.hostel_id)
-    .order('created_at', { ascending: false })
-    .limit(1);
   const recentIssue = maintenance?.[0] || null;
-
-  // Fetch Announcements
-  const { data: announcements } = await supabase
-    .from('announcements')
-    .select('*')
-    .eq('hostel_id', profile.hostel_id)
-    .order('created_at', { ascending: false })
-    .limit(3);
-
-  // Fetch Community Needs
-  const { data: needs } = await supabase
-    .from('need_have_posts')
-    .select('*, profiles(name)')
-    .eq('type', 'need')
-    .eq('status', 'active')
-    .order('created_at', { ascending: false })
-    .limit(3);
 
   return (
     <div className="space-y-6">

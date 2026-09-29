@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Bell, Menu, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,33 +16,14 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Sidebar } from "./sidebar";
 import { Input } from "@/components/ui/input";
-import { createClient } from "@/lib/supabase/client";
 import { logout } from "@/app/actions/auth";
 
-export function Header() {
-  const [profile, setProfile] = useState<{ name: string; avatar_url: string | null } | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const supabase = createClient();
+interface HeaderProps {
+  profile: { name: string; avatar_url: string | null } | null;
+  unreadCount: number;
+}
 
-  useEffect(() => {
-    async function loadData() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase.from('profiles').select('name, avatar_url').eq('id', user.id).single();
-        if (data) setProfile(data);
-
-        const { count } = await supabase
-          .from('notifications')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('is_read', false);
-        
-        if (count) setUnreadCount(count);
-      }
-    }
-    loadData();
-  }, [supabase]);
-
+export function Header({ profile, unreadCount }: HeaderProps) {
   const initials = profile?.name ? profile.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U';
 
   return (
@@ -123,7 +103,7 @@ export function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem className="p-0">
                 <form action={logout} className="w-full">
-                  <button type="submit" className="w-full flex px-1.5 py-1 text-red-600 text-left outline-none cursor-default">Log out</button>
+                  <button type="submit" className="w-full flex px-2 py-1.5 text-sm text-red-600 text-left outline-none cursor-default">Log out</button>
                 </form>
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -35,21 +35,25 @@ export default async function WaterPage() {
 
   const hostelName = (profile.hostels as any)?.name || 'Hostel';
 
-  // Fetch all floors for the user's hostel and join their purifiers
-  const { data: floors } = await supabase
-    .from('floors')
-    .select('*, purifiers(*)')
-    .eq('hostel_id', profile.hostel_id)
-    .order('floor_number');
-
-  // Fetch active maintenance issues for plumbing/purifier
-  const { data: issues } = await supabase
-    .from('maintenance_issues')
-    .select('id, floor_id, title, created_at, status')
-    .eq('hostel_id', profile.hostel_id)
-    .like('title', 'Water purifier problem%')
-    .in('status', ['reported', 'in_progress'])
-    .order('created_at', { ascending: false });
+  // Fetch all floors and active maintenance issues in parallel
+  const [
+    { data: floors },
+    { data: issues }
+  ] = await Promise.all([
+    supabase
+      .from('floors')
+      .select('*, purifiers(*)')
+      .eq('hostel_id', profile.hostel_id)
+      .order('floor_number'),
+      
+    supabase
+      .from('maintenance_issues')
+      .select('id, floor_id, title, created_at, status')
+      .eq('hostel_id', profile.hostel_id)
+      .like('title', 'Water purifier problem%')
+      .in('status', ['reported', 'in_progress'])
+      .order('created_at', { ascending: false })
+  ]);
 
   if (!floors) {
     return (

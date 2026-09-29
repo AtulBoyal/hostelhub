@@ -38,21 +38,25 @@ export default async function LaundryPage() {
 
   const hostelName = (profile.hostels as any)?.name || 'Hostel';
 
-  // Fetch all floors for the user's hostel and join their washing machines
-  const { data: floors } = await supabase
-    .from('floors')
-    .select('*, washing_machines(*, profiles(name))')
-    .eq('hostel_id', profile.hostel_id)
-    .order('floor_number');
-
-  // Fetch active maintenance issues for laundry (using title since 'laundry' category doesn't exist natively)
-  const { data: issues } = await supabase
-    .from('maintenance_issues')
-    .select('id, floor_id, title, created_at, status')
-    .eq('hostel_id', profile.hostel_id)
-    .like('title', 'Washing machine problem%')
-    .in('status', ['reported', 'in_progress'])
-    .order('created_at', { ascending: false });
+  // Fetch all floors and active maintenance issues in parallel
+  const [
+    { data: floors },
+    { data: issues }
+  ] = await Promise.all([
+    supabase
+      .from('floors')
+      .select('*, washing_machines(*, profiles(name))')
+      .eq('hostel_id', profile.hostel_id)
+      .order('floor_number'),
+      
+    supabase
+      .from('maintenance_issues')
+      .select('id, floor_id, title, created_at, status')
+      .eq('hostel_id', profile.hostel_id)
+      .like('title', 'Washing machine problem%')
+      .in('status', ['reported', 'in_progress'])
+      .order('created_at', { ascending: false })
+  ]);
 
   if (!floors) {
     return (
