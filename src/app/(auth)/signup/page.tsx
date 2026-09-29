@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useActionState, useEffect, useState } from 'react';
+import { CheckCircle2 } from 'lucide-react';
 import { signup } from '@/app/actions/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,8 +22,24 @@ export default function SignupPage() {
   const [floors, setFloors] = useState<any[]>([]);
   const [selectedHostel, setSelectedHostel] = useState('');
   const [selectedFloor, setSelectedFloor] = useState('');
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   
   const supabase = createClient();
+
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+    } catch (error) {
+      console.error('Google login error:', error);
+      setIsGoogleLoading(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchHostels() {
@@ -60,6 +77,13 @@ export default function SignupPage() {
               <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-600">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <p>{state.error}</p>
+              </div>
+            )}
+            
+            {state?.success && (
+              <div className="flex items-center gap-2 rounded-md bg-green-50 p-3 text-sm text-green-700 border border-green-200">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
+                <p className="font-medium">{state.success}</p>
               </div>
             )}
             
@@ -123,7 +147,7 @@ export default function SignupPage() {
 
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isPending}>
+            <Button type="submit" className="w-full" disabled={isPending || isGoogleLoading}>
               {isPending ? 'Creating account...' : 'Create Account'}
             </Button>
 
@@ -140,18 +164,13 @@ export default function SignupPage() {
               type="button"
               variant="outline"
               className="w-full bg-white"
-              onClick={async () => {
-                const { createClient } = await import('@/lib/supabase/client');
-                const supabase = createClient();
-                await supabase.auth.signInWithOAuth({
-                  provider: 'google',
-                  options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                  },
-                });
-              }}
+              disabled={isPending || isGoogleLoading}
+              onClick={handleGoogleLogin}
             >
-              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+              {isGoogleLoading ? (
+                <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
+              ) : (
+                <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                   fill="#4285F4"
@@ -169,7 +188,8 @@ export default function SignupPage() {
                   fill="#EA4335"
                 />
               </svg>
-              Google
+              )}
+              {isGoogleLoading ? 'Connecting to Google...' : 'Google'}
             </Button>
 
             <div className="text-center text-sm text-slate-500">

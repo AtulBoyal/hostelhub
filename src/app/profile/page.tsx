@@ -3,6 +3,7 @@ import { getCachedAuthUser } from "@/lib/auth-user";
 import { redirect } from "next/navigation";
 import { Building2, Layers, DoorOpen, Award, Mail } from "lucide-react";
 import { LogoutButton } from "./logout-button";
+import { PasswordChangeForm } from "./password-change-form";
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,8 @@ export default async function ProfilePage() {
   const hostelName = profile.hostels?.name || 'Unknown Hostel';
   const floorNumber = profile.floors?.floor_number || 'Unknown Floor';
   const initials = profile.name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'U';
+
+  const isGoogleUser = user.app_metadata.provider === 'google' || user.identities?.some((id: any) => id.provider === 'google');
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-10">
@@ -111,7 +114,23 @@ export default async function ProfilePage() {
             </div>
           )}
 
-          {/* 5. ACCOUNT ACTIONS */}
+          {/* 5. SECURITY / PASSWORD */}
+          <div className="bg-white border border-slate-200 rounded-[24px] overflow-hidden shadow-sm">
+            <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+              <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Security</h2>
+            </div>
+            <div className="p-5">
+              {isGoogleUser ? (
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-800 leading-relaxed text-center">
+                  Your account uses Google Sign-In. Your password is managed securely by Google.
+                </div>
+              ) : (
+                <PasswordChangeForm />
+              )}
+            </div>
+          </div>
+
+          {/* 6. ACCOUNT ACTIONS */}
           <div className="bg-white border border-slate-200 rounded-[24px] overflow-hidden shadow-sm">
             <div className="p-5 border-b border-slate-100 bg-slate-50/50">
               <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Account</h2>

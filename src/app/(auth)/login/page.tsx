@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { login } from '@/app/actions/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,24 @@ const initialState = {
 
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState(login, initialState);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+    } catch (error) {
+      console.error('Google login error:', error);
+      setIsGoogleLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -60,7 +78,7 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isPending}>
+            <Button type="submit" className="w-full" disabled={isPending || isGoogleLoading}>
               {isPending ? 'Signing in...' : 'Sign In'}
             </Button>
             
@@ -77,18 +95,13 @@ export default function LoginPage() {
               type="button"
               variant="outline"
               className="w-full bg-white"
-              onClick={async () => {
-                const { createClient } = await import('@/lib/supabase/client');
-                const supabase = createClient();
-                await supabase.auth.signInWithOAuth({
-                  provider: 'google',
-                  options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                  },
-                });
-              }}
+              disabled={isPending || isGoogleLoading}
+              onClick={handleGoogleLogin}
             >
-              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+              {isGoogleLoading ? (
+                <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
+              ) : (
+                <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                   fill="#4285F4"
@@ -106,7 +119,8 @@ export default function LoginPage() {
                   fill="#EA4335"
                 />
               </svg>
-              Google
+              )}
+              {isGoogleLoading ? 'Connecting to Google...' : 'Google'}
             </Button>
 
             <div className="text-center text-sm text-slate-500">
