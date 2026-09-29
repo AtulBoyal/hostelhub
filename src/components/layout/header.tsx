@@ -41,7 +41,7 @@ export function Header({ profile, unreadCount }: HeaderProps) {
                 <span className="text-xl font-bold text-slate-900 tracking-tight">Hostel<span className="text-blue-600">Hub</span></span>
               </div>
               <div className="flex-1 overflow-y-auto">
-                <Sidebar />
+                <Sidebar profile={profile} unreadCount={unreadCount} />
               </div>
             </div>
           </SheetContent>
