@@ -156,3 +156,37 @@ export async function logout() {
   await supabase.auth.signOut()
   redirect('/login')
 }
+
+export async function exchangeAuthCode(code: string) {
+  const supabase = await createClient()
+  const { error } = await supabase.auth.exchangeCodeForSession(code)
+  
+  if (error) {
+    return { error: error.message }
+  }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single()
+    
+    if (!profile) {
+      if (user.user_metadata?.hostel_id) {
+        const { error: insertError } = await supabase.from('profiles').insert([{
+          id: user.id,
+          name: user.user_metadata.full_name || 'Unknown',
+          email: user.email,
+          hostel_id: user.user_metadata.hostel_id,
+          floor_id: user.user_metadata.floor_id,
+          room_number: user.user_metadata.room_number,
+          contribution_points: 0
+        }]);
+        if (!insertError) {
+           return { success: true, redirect: '/dashboard' }
+        }
+      }
+      return { success: true, redirect: '/onboarding' }
+    }
+  }
+
+  return { success: true, redirect: '/dashboard' }
+}

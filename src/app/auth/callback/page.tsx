@@ -1,62 +1,79 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import Link from 'next/link'
+'use client';
 
-export default async function AuthCallbackPage(
-  props: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-  }
-) {
-  const searchParams = await props.searchParams;
-  const code = searchParams.code as string;
-  const next = (searchParams.next as string) ?? '/dashboard';
-  
-  if (code) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+import { useEffect, useState, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { exchangeAuthCode } from '@/app/actions/auth';
+import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
+
+export default function AuthCallbackPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [error, setError] = useState(false);
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+
+    const code = searchParams.get('code');
+    const next = searchParams.get('next');
     
-    if (!error) {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single()
-        
-        if (!profile) {
-          if (user.user_metadata?.hostel_id) {
-            const { error: insertError } = await supabase.from('profiles').insert([{
-              id: user.id,
-              name: user.user_metadata.full_name || 'Unknown',
-              email: user.email,
-              hostel_id: user.user_metadata.hostel_id,
-              floor_id: user.user_metadata.floor_id,
-              room_number: user.user_metadata.room_number,
-              contribution_points: 0
-            }]);
-            if (!insertError) {
-               redirect(next)
-            }
-          }
-          redirect('/onboarding')
-        }
-      }
-      redirect(next)
+    if (!code) {
+      setError(true);
+      return;
     }
+
+    const exchangeCode = async () => {
+      try {
+        const result = await exchangeAuthCode(code);
+        if (result.error) {
+          setError(true);
+        } else if (result.success) {
+          // Force a router refresh to ensure middleware sees the new cookie
+          router.refresh();
+          router.replace(next || result.redirect || '/dashboard');
+        }
+      } catch (err) {
+        setError(true);
+      }
+    };
+
+    exchangeCode();
+  }, [searchParams, router]);
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full text-center space-y-4 shadow-sm">
+          <h2 className="text-xl font-bold text-red-600">Google sign-in could not be completed</h2>
+          <p className="text-slate-500">There was an issue authenticating your account. Please try again.</p>
+          <div className="pt-4 flex flex-col gap-3">
+            <Link href="/login" className="inline-flex items-center justify-center w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-3 px-5 font-bold transition-colors">
+              Try again
+            </Link>
+            <Link href="/login" className="inline-flex items-center justify-center w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl py-3 px-5 font-bold transition-colors">
+              Back to Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  // Error case
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full text-center space-y-4 shadow-sm">
-        <h2 className="text-xl font-bold text-red-600">Google sign-in could not be completed</h2>
-        <p className="text-slate-500">There was an issue authenticating your account. Please try again.</p>
-        <div className="pt-4 flex flex-col gap-3">
-          <Link href="/login" className="inline-flex items-center justify-center w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-3 px-5 font-bold transition-colors">
-            Try again
-          </Link>
-          <Link href="/login" className="inline-flex items-center justify-center w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl py-3 px-5 font-bold transition-colors">
-            Back to Login
-          </Link>
+      <div className="bg-white border border-slate-200 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-sm animate-in fade-in zoom-in-95 duration-300">
+        <div className="flex justify-center">
+          <div className="bg-slate-100 p-4 rounded-full">
+            <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+          </div>
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-slate-900">Signing you in...</h2>
+          <p className="text-slate-500 mt-2 text-sm font-medium">Please wait while we finish setting up your account.</p>
         </div>
       </div>
     </div>
-  )
+  );
 }
