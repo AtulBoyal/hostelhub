@@ -28,7 +28,7 @@ export default async function DashboardPage() {
   const { user, profile } = await getCachedAuthUser();
   const supabase = await createClient();
 
-  if (!user || !profile) {
+  if (!user || !profile || !profile.hostel_id) {
     return redirect(user ? '/onboarding' : '/login');
   }
 

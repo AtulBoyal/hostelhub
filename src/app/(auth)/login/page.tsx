@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useState } from 'react';
+import { useActionState, useState, useEffect } from 'react';
 import { login } from '@/app/actions/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,14 @@ const initialState = {
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState(login, initialState);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [urlError, setUrlError] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('error') === 'google_signup_blocked') {
+      setUrlError('Account not found. Please sign up first using the Signup page.');
+    }
+  }, []);
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
@@ -50,6 +58,12 @@ export default function LoginPage() {
               <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-600">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <p>{state.error}</p>
+              </div>
+            )}
+            {urlError && (
+              <div className="flex items-center gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-700">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <p>{urlError}</p>
               </div>
             )}
             <div className="space-y-2">

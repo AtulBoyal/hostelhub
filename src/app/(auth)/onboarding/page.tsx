@@ -38,8 +38,8 @@ export default function OnboardingPage() {
         setDefaultName(user.user_metadata.full_name);
       }
       
-      const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single();
-      if (profile) {
+      const { data: profile } = await supabase.from('profiles').select('id, hostel_id').eq('id', user.id).single();
+      if (profile && profile.hostel_id) {
         window.location.href = '/dashboard';
         return;
       }

@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
         </CardHeader>
         <CardContent className="space-y-4 pt-4">
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-800 leading-relaxed text-center">
-            Your account is linked to your Google account. You do not need a separate password for HostelHub.
+            Your account is linked to your Google account. You do not need a separate password for HostelHub. If you wish to change your password, you can do so in the Personal Info settings inside HostelHub.
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">

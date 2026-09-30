@@ -22,8 +22,8 @@ export async function submitOnboarding(prevState: any, formData: FormData) {
     return { error: 'You must be logged in to complete onboarding.' }
   }
 
-  // Insert into profiles table
-  const { error: profileError } = await supabase.from('profiles').insert([
+  // Upsert into profiles table (since trigger might have created the row already)
+  const { error: profileError } = await supabase.from('profiles').upsert([
     {
       id: user.id,
       name,

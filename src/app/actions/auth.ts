@@ -15,6 +15,11 @@ export async function login(prevState: any, formData: FormData) {
 
   const supabase = await createClient()
 
+  const { data: profile } = await supabase.from('profiles').select('id').eq('email', email).single()
+  if (!profile) {
+    return { error: 'Account does not exist. Please sign up first.' }
+  }
+
   const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -46,6 +51,11 @@ export async function signup(prevState: any, formData: FormData) {
 
   const supabase = await createClient()
 
+  const { data: existingProfile } = await supabase.from('profiles').select('id').eq('email', email).single()
+  if (existingProfile) {
+    return { error: 'Account already exists. Please try signing in.' }
+  }
+
   // 1. Sign up the user (pass data in metadata for fallback)
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
@@ -76,7 +86,7 @@ export async function signup(prevState: any, formData: FormData) {
   }
 
   // 2. Insert into profiles table
-  const { error: profileError } = await supabase.from('profiles').insert([
+  const { error: profileError } = await supabase.from('profiles').upsert([
     {
       id: user.id,
       name,
@@ -167,24 +177,12 @@ export async function exchangeAuthCode(code: string) {
 
   const { data: { user } } = await supabase.auth.getUser()
   if (user) {
-    const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single()
+    const { data: profile } = await supabase.from('profiles').select('id, hostel_id').eq('id', user.id).single()
     
-    if (!profile) {
-      if (user.user_metadata?.hostel_id) {
-        const { error: insertError } = await supabase.from('profiles').insert([{
-          id: user.id,
-          name: user.user_metadata.full_name || 'Unknown',
-          email: user.email,
-          hostel_id: user.user_metadata.hostel_id,
-          floor_id: user.user_metadata.floor_id,
-          room_number: user.user_metadata.room_number,
-          contribution_points: 0
-        }]);
-        if (!insertError) {
-           return { success: true, redirect: '/dashboard' }
-        }
-      }
-      return { success: true, redirect: '/onboarding' }
+    if (!profile || !profile.hostel_id) {
+       // New user trying to sign in with Google Auth, tell them to sign up first
+       await supabase.auth.signOut()
+       return { success: true, redirect: '/login?error=google_signup_blocked' }
     }
   }
 

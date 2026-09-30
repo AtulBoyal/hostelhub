@@ -13,8 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Sidebar } from "./sidebar";
 import { Input } from "@/components/ui/input";
 import { logout } from "@/app/actions/auth";
 
@@ -28,25 +26,9 @@ export function Header({ profile, unreadCount }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-slate-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-      {/* Mobile Sidebar Trigger */}
+      {/* Mobile Logo */}
       <div className="md:hidden flex items-center gap-2">
-        <Sheet>
-          <SheetTrigger className="p-2 -ml-2 text-slate-500 hover:text-slate-900 focus:outline-none rounded-md hover:bg-slate-100">
-            <span className="sr-only">Open sidebar</span>
-            <Menu className="h-6 w-6" aria-hidden="true" />
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-64">
-            <div className="h-full flex flex-col bg-white">
-              <div className="flex items-center h-16 px-6 bg-slate-50 border-b border-slate-200">
-                <span className="text-xl font-bold text-slate-900 tracking-tight">Hostel<span className="text-blue-600">Hub</span></span>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <Sidebar profile={profile} unreadCount={unreadCount} />
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-        <span className="text-lg font-bold text-slate-900 tracking-tight md:hidden">Hostel<span className="text-blue-600">Hub</span></span>
+        <span className="text-lg font-bold text-slate-900 tracking-tight">Hostel<span className="text-blue-600">Hub</span></span>
       </div>
 
       <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
