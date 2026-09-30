@@ -18,15 +18,7 @@ import {
   Bell,
   AlertTriangle
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useState, useRef, useEffect } from "react";
 
 const bottomNavItems = [
   { name: "Home", href: "/dashboard", icon: LayoutDashboard },
@@ -49,9 +41,33 @@ const moreNavItems = [
 export function BottomNav() {
   const pathname = usePathname();
 
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMoreOpen(false);
+      }
+    };
+    if (isMoreOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isMoreOpen]);
+
+  // close on route change
+  useEffect(() => {
+    setIsMoreOpen(false);
+  }, [pathname]);
+
   return (
     <div className="md:hidden fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-      <div className="grid h-full max-w-lg grid-cols-5 mx-auto">
+      <div className="grid h-full max-w-lg grid-cols-5 mx-auto relative" ref={menuRef}>
         {bottomNavItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
@@ -79,28 +95,36 @@ export function BottomNav() {
         })}
 
         {/* More Tab */}
-        <DropdownMenu>
-          <DropdownMenuTrigger className="inline-flex flex-col items-center justify-center px-2 hover:bg-slate-50 group focus:outline-none">
-            <MoreHorizontal className="w-6 h-6 mb-1 text-slate-500 group-hover:text-blue-600 transition-colors" />
-            <span className="text-[10px] text-slate-500 group-hover:text-blue-600 transition-colors">
-              More
-            </span>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="end" className="w-56 mb-2 mr-2">
-            <DropdownMenuLabel>More Options</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
+        <button 
+          onClick={() => setIsMoreOpen(!isMoreOpen)}
+          className="inline-flex flex-col items-center justify-center px-2 hover:bg-slate-50 group focus:outline-none"
+        >
+          <MoreHorizontal className={cn("w-6 h-6 mb-1 transition-colors", isMoreOpen ? "text-blue-600" : "text-slate-500 group-hover:text-blue-600")} />
+          <span className={cn("text-[10px] transition-colors", isMoreOpen ? "text-blue-600 font-medium" : "text-slate-500 group-hover:text-blue-600")}>
+            More
+          </span>
+        </button>
+
+        {/* The Custom Dropdown Menu */}
+        {isMoreOpen && (
+          <div className="absolute bottom-[72px] right-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in slide-in-from-bottom-2 fade-in duration-200 z-50">
+            <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/80">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">More Options</span>
+            </div>
+            <div className="p-1.5 flex flex-col">
               {moreNavItems.map(item => (
-                <DropdownMenuItem key={item.name}>
-                  <Link href={item.href} className="flex items-center w-full cursor-pointer h-full">
-                    <item.icon className={cn("mr-3 h-4 w-4", item.color || "text-slate-500")} />
-                    <span className={cn(item.color || "text-slate-700")}>{item.name}</span>
-                  </Link>
-                </DropdownMenuItem>
+                <Link 
+                  key={item.name} 
+                  href={item.href} 
+                  className="flex items-center px-3 py-2.5 rounded-xl hover:bg-slate-100 transition-colors"
+                >
+                  <item.icon className={cn("mr-3 h-4 w-4", item.color || "text-slate-500")} />
+                  <span className={cn("text-sm font-semibold", item.color || "text-slate-700")}>{item.name}</span>
+                </Link>
               ))}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
