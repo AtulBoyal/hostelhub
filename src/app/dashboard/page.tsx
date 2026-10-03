@@ -18,7 +18,9 @@ import { createClient } from "@/lib/supabase/server";
 export const dynamic = 'force-dynamic';
 
 function getGreeting() {
-  const hour = new Date().getHours();
+  const offset = 5.5 * 60 * 60 * 1000;
+  const localDate = new Date(Date.now() + offset);
+  const hour = localDate.getUTCHours();
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
   return "Good evening";

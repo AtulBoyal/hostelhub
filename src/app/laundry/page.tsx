@@ -164,10 +164,10 @@ export default async function LaundryPage() {
               <h3 className="text-xl font-bold text-slate-900">Floor {activeBooking.floorNumber} · Washing Machine 1</h3>
               <div className="flex items-center gap-2 mt-2 text-sm text-slate-600 font-medium">
                 <PlayCircle className="h-4 w-4 text-slate-400" />
-                <span>Started {new Date(activeBooking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>Started {new Date(activeBooking.startTime).toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })}</span>
                 <span className="text-slate-300">•</span>
                 <Clock className="h-4 w-4 text-slate-400" />
-                <span>Available at {new Date(activeBooking.expectedFinishTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>Available at {new Date(activeBooking.expectedFinishTime).toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })}</span>
               </div>
               {activeBooking.instruction && (
                 <p className="mt-3 text-sm text-amber-800 italic bg-amber-100/50 inline-block px-3 py-1.5 rounded-md">&quot;{activeBooking.instruction}&quot;</p>
@@ -238,8 +238,8 @@ export default async function LaundryPage() {
                       </div>
                       <div className="pl-5 mt-2 space-y-1.5 text-xs text-slate-600 font-medium">
                         <p><span className="text-slate-400">Used by</span> {m.profiles?.name?.split(' ')[0] || 'Someone'}</p>
-                        <p><span className="text-slate-400">Started</span> {m.start_time ? new Date(m.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</p>
-                        <p><span className="text-slate-400">Available at</span> {floor.expectedFinish ? floor.expectedFinish.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</p>
+                        <p><span className="text-slate-400">Started</span> {m.start_time ? new Date(m.start_time).toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) : '--'}</p>
+                        <p><span className="text-slate-400">Available at</span> {floor.expectedFinish ? floor.expectedFinish.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) : '--'}</p>
                         {m.instruction && (
                           <p className="italic text-slate-500 mt-2">&quot;{m.instruction}&quot;</p>
                         )}
